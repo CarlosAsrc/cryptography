@@ -1,6 +1,5 @@
 const yargs = require('yargs');
 const fs = require('fs');
-const { Cipher } = require('crypto');
 
 yargs.command(
     {
@@ -31,15 +30,18 @@ yargs.command(
 
 const alphabet = 'abcdefghijklmnopqrstuvwxyz'
 const portugueseCoincidenceIndex = 0.072723
-const englishCoincidenceIndex = 0.065
+const portuguesMostFrequentLetter = 'a'
 
 
 const decipher = (cipherText) => {
     const keySize = calculatekeySize(cipherText);
-    const key = discoverKey(cipherText, keySize);
+    const key = discoverKey(cipherText, 7);
+    const clearText = getClearText(cipherText, key);
+    
 
-    console.log(keySize)
-    console.log(key)
+    console.log('Key Size: ' + keySize)
+    console.log('Key: ' + key)
+    // console.log('Clear text: \n' + clearText)
 }
 
 
@@ -49,7 +51,7 @@ const calculatekeySize = (cipherText) => {
     let line = []
     let cipher = ''
 
-    for (var i = 1; i <= 7; i++) {
+    for (var i = 1; i <= 20; i++) {
         for (var j = 1; j <= i; j++) {
             cipher = ''
             for (var k = j-1; k < cipherText.length; k+=i) {
@@ -78,8 +80,8 @@ const calculatekeySize = (cipherText) => {
 
 
 const discoverKey = (cipherText, keySize) => {
-    let swapCiphers = []
-    let column = ''
+    let column = '', swapCiphers = [], key = '', mostFrequentLetter
+
     for(var i=0; i<keySize; i++) {
         for(var j=i; j<=cipherText.length; j+=keySize) {
             column += cipherText.charAt(j)
@@ -90,9 +92,32 @@ const discoverKey = (cipherText, keySize) => {
 
     for(let cipher in swapCiphers) {
         lettersOccurrences = calculateFrequencyOccurrences(swapCiphers[cipher])
-        let mostFrequentLetter = Object.keys(lettersOccurrences).reduce(function(a, b){ return lettersOccurrences[a] > lettersOccurrences[b] ? a : b });
-        
+        mostFrequentLetter = Object.keys(lettersOccurrences).reduce(function(a, b){ return lettersOccurrences[a] > lettersOccurrences[b] ? a : b });
+        key += alphabet.charAt( Math.abs(alphabet.indexOf(mostFrequentLetter) - alphabet.indexOf(portuguesMostFrequentLetter)) )
+
+        console.log(swapCiphers[cipher] + '\nletra mais frequente: '+mostFrequentLetter + '\nfrequencia: '+ lettersOccurrences[mostFrequentLetter] + '\nchave: '+key)
     }
+
+    return key
+}
+
+
+const getClearText = (cipherText, key) => {
+    let clearText = '', j = 0, cipherLetterIndex = 0, keyLetterIndex = 0, clearTextLetterIndex = 0
+    for(let i=0; i< cipherText.length; i++) {
+        cipherLetterIndex = alphabet.indexOf(cipherText.charAt(i))
+        keyLetterIndex = alphabet.indexOf(key.charAt(j))
+        clearTextLetterIndex = Math.abs( cipherLetterIndex - keyLetterIndex )
+        clearTextLetterIndex = keyLetterIndex > cipherLetterIndex ? Math.abs(26 - keyLetterIndex + cipherLetterIndex) : Math.abs(keyLetterIndex - cipherLetterIndex)
+        
+        clearText += alphabet.charAt(clearTextLetterIndex)
+        
+        j++
+        if(j == key.length) {
+            j = 0    
+        }
+    }
+    return clearText
 }
 
 
@@ -120,16 +145,8 @@ const calculateFrequencyOccurrences = (cipher) => {
         lettersOccurrences[alphabet.charAt(i)] = (cipher.match(new RegExp(alphabet.charAt(i), "g")) || [] ).length
     }
 
-    // for (let key in lettersOccurrences)
-    //     console.log(key + ': ' + lettersOccurrences[key]);
-
     return lettersOccurrences
 }
-
-
-
-
-
 
 
 
