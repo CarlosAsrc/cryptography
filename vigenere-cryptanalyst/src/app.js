@@ -34,14 +34,15 @@ const portuguesMostFrequentLetter = 'a'
 
 
 const decipher = (cipherText) => {
-    const keySize = calculatekeySize(cipherText);
-    const key = discoverKey(cipherText, 7);
-    const clearText = getClearText(cipherText, key);
+    const keySize = calculatekeySize(cipherText)
+    const possibleKeys = discoverPossibleKeys(cipherText, keySize)
+    const key = getMostLikelyKey(cipherText, possibleKeys)
+    //const clearText = getClearText(cipherText, key);
     
 
     console.log('Key Size: ' + keySize)
     console.log('Key: ' + key)
-    // console.log('Clear text: \n' + clearText)
+    //console.log('Clear text: \n' + clearText)
 }
 
 
@@ -79,8 +80,25 @@ const calculatekeySize = (cipherText) => {
 }
 
 
-const discoverKey = (cipherText, keySize) => {
-    let column = '', swapCiphers = [], key = '', mostFrequentLetter
+const getMostLikelyKey = (cipherText, possibleKeys) => {
+    let clearTextsCoincidenceIndex = []
+    for(key in possibleKeys) {
+        clearTextsCoincidenceIndex.push({key: possibleKeys[key], coincidenceIndex: calculateCoincidenceIndex(getClearText(cipherText, possibleKeys[key])), text: getClearText(cipherText, possibleKeys[key])})
+    }
+    console.log(clearTextsCoincidenceIndex)
+    
+}
+
+
+
+
+
+const discoverPossibleKeys = (cipherText, keySize) => {
+    let column = '',
+        swapCiphers = [],
+        key = '',
+        mostFrequentLetter,
+        keyAlphaet = []
 
     for(var i=0; i<keySize; i++) {
         for(var j=i; j<=cipherText.length; j+=keySize) {
@@ -92,15 +110,48 @@ const discoverKey = (cipherText, keySize) => {
 
     for(let cipher in swapCiphers) {
         lettersOccurrences = calculateFrequencyOccurrences(swapCiphers[cipher])
-        mostFrequentLetter = Object.keys(lettersOccurrences).reduce(function(a, b){ return lettersOccurrences[a] > lettersOccurrences[b] ? a : b });
-        key += alphabet.charAt( Math.abs(alphabet.indexOf(mostFrequentLetter) - alphabet.indexOf(portuguesMostFrequentLetter)) )
+        orderedLettersOccurrences = getOrderedLettersOccurrences(lettersOccurrences)
 
-        console.log(swapCiphers[cipher] + '\nletra mais frequente: '+mostFrequentLetter + '\nfrequencia: '+ lettersOccurrences[mostFrequentLetter] + '\nchave: '+key)
+        keyAlphaet.push([
+            orderedLettersOccurrences[0].letter,
+            orderedLettersOccurrences[1].letter,
+            orderedLettersOccurrences[2].letter
+        ])
+        //key += alphabet.charAt( Math.abs(alphabet.indexOf(mostFrequentLetter) - alphabet.indexOf(portuguesMostFrequentLetter)) )
+        
+        //console.log(swapCiphers[cipher] + '\nletra mais frequente: '+mostFrequentLetter + '\nfrequencia: '+ lettersOccurrences[mostFrequentLetter] + '\nchave: '+key)
+        //console.log(orderedLettersOccurrences)
     }
 
-    return key
+    //console.log(keyAlphaet)
+    return generatePossibleKeys(keyAlphaet)
 }
 
+
+const generatePossibleKeys = (keyAlphaet) => {
+    let possibleKeys = [], keyPositionsIndex = 0, keyPositionIndex = 0, keyPositions = []
+
+    for(let i = 0; i < Math.pow(keyAlphaet.length, 3); i++) {
+        keyPositionIndex++
+        if(keyPositionIndex > 2) {keyPositionIndex = 0, keyPositionsIndex++}
+        if(keyPositionsIndex > 13) {keyPositionsIndex = 0}
+    }
+    return ['qeyrsqemiynsqe', 'meunomemeunome', 'asibcasasibcms']
+}
+
+
+const getOrderedLettersOccurrences = (lettersOccurrences) => {
+    orderedLettersOccurrences = []
+    Object.keys(lettersOccurrences).forEach(
+        function(a){ orderedLettersOccurrences.push({letter: a, frequency: lettersOccurrences[a]}) }
+    )
+    orderedLettersOccurrences = orderedLettersOccurrences.sort(
+        function(a, b){
+            return a.frequency > b.frequency ? -1 : 1
+        }
+    )
+    return orderedLettersOccurrences
+}
 
 const getClearText = (cipherText, key) => {
     let clearText = '', j = 0, cipherLetterIndex = 0, keyLetterIndex = 0, clearTextLetterIndex = 0
