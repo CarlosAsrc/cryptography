@@ -1,9 +1,11 @@
 const yargs = require('yargs');
-const fs = require('fs');
+const FileUtils = require('./file-utils');
+const CoincidenceIndexService = require('./coincidence-index-service');
+const {alphabet, englishCoincidenceIndex, englishMostFrequentLetter} = require('./constants');
 
 yargs.command(
     {
-        command: 'decipher',
+        command: 'decrypt',
         describe: 'Add new note',
         builder: {
             cipher: {
@@ -19,29 +21,32 @@ yargs.command(
         },
         handler(argv) {
             if(argv.file) {
-                decipher(load(argv.file).toLowerCase().split(/\s/).join(''))    
+                decrypt(FileUtils.load(argv.file).toLowerCase().split(/\s/).join(''), argv.file)    
             } else if(argv.cipher){
-                decipher(argv.cipher.toLowerCase().split(/\s/).join(''))
+                decrypt(argv.cipher.toLowerCase().split(/\s/).join(''), 'texto-direto.txt')
             }
         }
     }
 )
 
 
-const alphabet = 'abcdefghijklmnopqrstuvwxyz'
-const portugueseCoincidenceIndex = 0.072723
-const portuguesMostFrequentLetter = 'a'
 
-
-const decipher = (cipherText) => {
+const decrypt = (cipherText, file) => {
+    let output = ''
     const keySize = calculatekeySize(cipherText);
-    const key = discoverKey(cipherText, 7);
+    const key = discoverKey(cipherText, keySize);
     const clearText = getClearText(cipherText, key);
     
 
     console.log('Key Size: ' + keySize)
     console.log('Key: ' + key)
-    // console.log('Clear text: \n' + clearText)
+    console.log('Clear text: \n' + clearText)
+
+    output += 'Key Size: ' + keySize
+    output += '\n'+'Key: ' + key
+    output += '\n'+'Clear text: \n' + clearText
+
+    FileUtils.write(file, output)
 }
 
 
@@ -57,7 +62,7 @@ const calculatekeySize = (cipherText) => {
             for (var k = j-1; k < cipherText.length; k+=i) {
                 cipher += cipherText.charAt(k)
             }
-            line.push({ cipher: cipher, index: calculateCoincidenceIndex(cipher) })   
+            line.push({ cipher: cipher, index: CoincidenceIndexService.calculateCoincidenceIndex(cipher) })   
         }
         table.push([...line])
         line = []
@@ -68,7 +73,7 @@ const calculatekeySize = (cipherText) => {
 
     for(var [i, v] of table.entries()) {
         for(var index in v ) {
-            indexDistance = Math.abs(portugueseCoincidenceIndex - v[index].index)
+            indexDistance = Math.abs(englishCoincidenceIndex - v[index].index)
             indexDistance < closest ? (
                 keySize = i, closest = indexDistance
             ) : null
@@ -91,11 +96,9 @@ const discoverKey = (cipherText, keySize) => {
     }
 
     for(let cipher in swapCiphers) {
-        lettersOccurrences = calculateFrequencyOccurrences(swapCiphers[cipher])
+        lettersOccurrences = CoincidenceIndexService.calculateFrequencyOccurrences(swapCiphers[cipher])
         mostFrequentLetter = Object.keys(lettersOccurrences).reduce(function(a, b){ return lettersOccurrences[a] > lettersOccurrences[b] ? a : b });
-        key += alphabet.charAt( Math.abs(alphabet.indexOf(mostFrequentLetter) - alphabet.indexOf(portuguesMostFrequentLetter)) )
-
-        console.log(swapCiphers[cipher] + '\nletra mais frequente: '+mostFrequentLetter + '\nfrequencia: '+ lettersOccurrences[mostFrequentLetter] + '\nchave: '+key)
+        key += alphabet.charAt( Math.abs(alphabet.indexOf(mostFrequentLetter) - alphabet.indexOf(englishMostFrequentLetter)) )
     }
 
     return key
@@ -108,7 +111,7 @@ const getClearText = (cipherText, key) => {
         cipherLetterIndex = alphabet.indexOf(cipherText.charAt(i))
         keyLetterIndex = alphabet.indexOf(key.charAt(j))
         clearTextLetterIndex = Math.abs( cipherLetterIndex - keyLetterIndex )
-        clearTextLetterIndex = keyLetterIndex > cipherLetterIndex ? Math.abs(26 - keyLetterIndex + cipherLetterIndex) : Math.abs(keyLetterIndex - cipherLetterIndex)
+        clearTextLetterIndex = keyLetterIndex > cipherLetterIndex ? Math.abs(alphabet.length - keyLetterIndex + cipherLetterIndex) : Math.abs(keyLetterIndex - cipherLetterIndex)
         
         clearText += alphabet.charAt(clearTextLetterIndex)
         
@@ -120,44 +123,6 @@ const getClearText = (cipherText, key) => {
     return clearText
 }
 
-
-
-const calculateCoincidenceIndex = (cipher) => {
-    lettersOccurrences =  calculateFrequencyOccurrences(cipher)
-    let size = 0
-    for (let key in lettersOccurrences) 
-        size += lettersOccurrences[key]
-
-
-    let index = 0
-    
-    for (let key in lettersOccurrences) {
-        index += ( (lettersOccurrences[key] * (lettersOccurrences[key]-1) )  /  (size*(size-1)) )
-    }
-
-    return index
-}
-
-const calculateFrequencyOccurrences = (cipher) => {
-    let lettersOccurrences = {}
-    
-    for (var i = 0; i < alphabet.length; i++) {
-        lettersOccurrences[alphabet.charAt(i)] = (cipher.match(new RegExp(alphabet.charAt(i), "g")) || [] ).length
-    }
-
-    return lettersOccurrences
-}
-
-
-
-
-const load = (fileName) => {
-    try {
-        return fs.readFileSync('./cifras/'+fileName, 'utf8')
-    } catch (e) {
-        return []
-    }
-}
 
 
 yargs.parse()
