@@ -1,6 +1,8 @@
 
 const {alphabet} = require('./constants');
 
+
+// Calcula o valor do índice de coincidencia dado um texto qualquer:
 const calculateCoincidenceIndex = (cipher) => {
     lettersOccurrences =  calculateFrequencyOccurrences(cipher)
     let size = 0
@@ -17,6 +19,7 @@ const calculateCoincidenceIndex = (cipher) => {
     return index
 }
 
+// Calcula a frequência de cada letra dado um texto qualquer:
 const calculateFrequencyOccurrences = (cipher) => {
     let lettersOccurrences = {}
     

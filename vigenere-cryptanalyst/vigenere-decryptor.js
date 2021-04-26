@@ -7,6 +7,7 @@ const FileUtils = require('./file-utils');
 const CoincidenceIndexService = require('./coincidence-index-service');
 const {alphabet, englishCoincidenceIndex, englishMostFrequentLetter, portugueseCoincidenceIndex, portugueseMostFrequentLetter} = require('./constants');
 
+// Direciona argumentos de entrada para execução do algoritmo:
 yargs.command(
     {
         command: 'decrypt',
@@ -48,6 +49,7 @@ yargs.command(
 let languageCoincidenceIndex
 let languageMostFrequentLetter
 
+// Função principal da aplicação (interação com usuário pelo terminal e chamadas das funções principais do algoritmo):
 const decrypt = (cipherText, file) => {
     let output = '', key ='', clearText=''
     const possibleKeys = discoverPossibleKeys(cipherText, calculatekeySize(cipherText));
@@ -72,7 +74,7 @@ const decrypt = (cipherText, file) => {
     }
 }
 
-
+// Calcula o tamanho da chave dado uma cifra qualquer:
 const calculatekeySize = (cipherText) => {
 
     let table = []
@@ -107,25 +109,8 @@ const calculatekeySize = (cipherText) => {
 }
 
 
-const getClearText = (cipherText, key) => {
-    let clearText = '', j = 0, cipherLetterIndex = 0, keyLetterIndex = 0, clearTextLetterIndex = 0
-    for(let i=0; i< cipherText.length; i++) {
-        cipherLetterIndex = alphabet.indexOf(cipherText.charAt(i))
-        keyLetterIndex = alphabet.indexOf(key.charAt(j))
-        clearTextLetterIndex = keyLetterIndex > cipherLetterIndex ? Math.abs(alphabet.length - keyLetterIndex + cipherLetterIndex) : Math.abs(keyLetterIndex - cipherLetterIndex)
-        
-        clearText += alphabet.charAt(clearTextLetterIndex)
-        
-        j++
-        if(j == key.length) {
-            j = 0    
-        }
-    }
-    return clearText
-}
-
-
-
+// Busca chave mais provável, e possíveis caracteres alternativos para cada posição da chave:
+// Retorna: {provável-chave, caracteres-alternativos}
 const discoverPossibleKeys = (cipherText, keySize) => {
     let column = '',
         swapCiphers = [],
@@ -154,6 +139,29 @@ const discoverPossibleKeys = (cipherText, keySize) => {
     return {bestKeyCandidate: bestKeyCandidate, keyCharactersAlternatives: keyCharactersAlternatives}
 }
 
+
+
+// Retorna o texto claro, dado um texto cifrado e a chave:
+const getClearText = (cipherText, key) => {
+    let clearText = '', j = 0, cipherLetterIndex = 0, keyLetterIndex = 0, clearTextLetterIndex = 0
+    for(let i=0; i< cipherText.length; i++) {
+        cipherLetterIndex = alphabet.indexOf(cipherText.charAt(i))
+        keyLetterIndex = alphabet.indexOf(key.charAt(j))
+        clearTextLetterIndex = keyLetterIndex > cipherLetterIndex ? Math.abs(alphabet.length - keyLetterIndex + cipherLetterIndex) : Math.abs(keyLetterIndex - cipherLetterIndex)
+        
+        clearText += alphabet.charAt(clearTextLetterIndex)
+        
+        j++
+        if(j == key.length) {
+            j = 0    
+        }
+    }
+    return clearText
+}
+
+
+
+// Retorna uma lista ordenada descresente sobre as frequências de cada letra:
 const getOrderedLettersOccurrences = (lettersOccurrences) => {
     orderedLettersOccurrences = []
     Object.keys(lettersOccurrences).forEach(
