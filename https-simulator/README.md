@@ -1,4 +1,14 @@
-## Simulação de comunicação HTTPs:
+# HTTPs Simulator:
+
+## Running
+ - Make sure python and pip are installed
+ - Install PyCrypto (needed for the sha-256 algorithm): `pip install pycrypto`
+ - Execution:
+   -  Run on terminal:  `python3 main.py`
+   -  The output of each variable will be printed
+
+
+## Output explanation
 Valor `a` aleatório usado para calculo de `A`:
 - Hexadecimal: 570770D3CC40F1CDEC7F5AD2E71F349BA23A6DFC3AA6B73620E8913B42677094F16A647D57FFFDFD444E9A24E744FD2B1ABE02113F95247C24AFDA8C2647788ADAC3997D5184799E749858D127328B34EB856EA9CDF34F4F60C73939AA2636EA0DA87B73D466C40672372F106597ACD64A16C671C7FC6FF811C13714E235CA4F
 - Decimal:
